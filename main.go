@@ -3,12 +3,14 @@
 package main
 
 import (
+	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/app/server"
 )
 
 func main() {
 	h := server.Default()
 
+	h.StaticFS("/static", &app.FS{Root: "./static"})
 	register(h)
 	h.Spin()
 }
