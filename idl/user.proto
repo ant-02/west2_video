@@ -1,0 +1,110 @@
+syntax="proto3";
+
+package user;
+
+option go_package = "/user";
+
+import "api.proto";
+import "base.proto";
+
+message User {
+    string id = 1[(api.body)="id"];
+    string username = 2[(api.body)="username"];
+    string password = 3[(api.body)="password"];
+    string avatarUrl = 4[(api.body)="avatarUrl"];
+    string createdAt = 5[(api.body)="createdAt"];
+    string updatedAt = 6[(api.body)="updatedAt"];
+    string deletedAt = 7[(api.body)="deletedAt"];
+}
+
+message LoginRequest {
+    string username = 1[(api.body)="username"];
+    string password = 2[(api.body)="password"];
+    string code = 3[(api.body)="code"];
+}
+
+message LoginResponse {
+    base.Base base = 1;
+    User data = 2;
+}
+
+message RegisterRequest {
+    string username = 1[(api.body)="username"];
+    string password = 2[(api.body)="password"];
+}
+
+message RegisterResponse {
+    base.Base base = 1;
+}
+
+message GetUserInfoRequest {
+    string userId = 1[(api.path)="userId"];
+}
+
+message GetUserInfoResponse {
+    base.Base base = 1;
+    User data = 2;
+}
+
+message UploadAvatarRequest {
+    string data = 1[(api.body)="data"];
+}
+
+message UploadAvatarResponse {
+    base.Base base = 1;
+    User data = 2;
+}
+
+message MFA {
+    string secret = 1;
+    string qrcode = 2;
+}
+
+message GetMFARequest {}
+
+message GetMFAResponse {
+    base.Base base = 1;
+    MFA data = 2;
+}
+
+message BindMFARequest {
+    string code = 1[(api.body)="code"];
+    string secret = 2[(api.body)="secret"];
+}
+
+message BindMFAResponse {
+    base.Base base = 1;
+}
+
+message SearchImgRequest {
+    string data = 1[(api.body)="data"];
+}
+
+message SearchImgResponse {
+    base.Base base = 1;
+    string data = 2;
+}
+
+service UserService {
+    rpc Login(LoginRequest) returns (LoginResponse) {
+        option (api.post)="/user/login";
+    }
+    rpc Register(RegisterRequest) returns (RegisterResponse) {
+        option (api.post)="/user/register";
+    }
+    rpc GetUserInfo(GetUserInfoRequest) returns (GetUserInfoResponse) {
+        option (api.get)="/user/info";
+    }
+    rpc UploadAvatar(UploadAvatarRequest) returns (UploadAvatarResponse) {
+        option (api.put)="/user/avatar/upload";
+    }
+    rpc GetMFA(GetMFARequest) returns (GetMFAResponse) {
+        option (api.get)="/user/mfa/qrcode";
+    }
+    rpc BindMFA(BindMFARequest) returns (BindMFAResponse) {
+        option (api.post)="user/mfa/bind";
+    }
+    rpc SearchImg(SearchImgRequest) returns (SearchImgResponse) {
+        option (api.post)="/user/image/search";
+    }
+}

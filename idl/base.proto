@@ -1,0 +1,12 @@
+syntax="proto3";
+
+package base;
+
+option go_package = "/base";
+
+import "api.proto";
+
+message Base {
+    int64 code = 1;
+    string msg = 2;
+}
