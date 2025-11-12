@@ -4,7 +4,7 @@ import "github.com/bwmarrin/snowflake"
 
 var node *snowflake.Node
 
-func Init(nodeId int64) (err error) {
+func InitSnowflake(nodeId int64) (err error) {
 	node, err = snowflake.NewNode(nodeId)
 	return
 }

@@ -4,11 +4,23 @@ package user
 
 import (
 	"context"
+	"time"
+
+	"west2/biz/model/base"
+	user "west2/biz/model/user"
+	"west2/database"
+	"west2/pkg/config"
+	"west2/pkg/middleware"
+	"west2/pkg/repository"
+	"west2/pkg/service"
 
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/protocol/consts"
-	user "west2/biz/model/user"
+	"github.com/google/uuid"
+	"github.com/redis/go-redis/v9"
 )
+
+var dateFormat string = "2006-01-02T15:04:05.000Z"
 
 // Login .
 // @router /user/login [POST]
@@ -17,13 +29,82 @@ func Login(ctx context.Context, c *app.RequestContext) {
 	var req user.LoginRequest
 	err = c.BindAndValidate(&req)
 	if err != nil {
-		c.String(consts.StatusBadRequest, err.Error())
+		c.JSON(consts.StatusBadRequest, &user.LoginResponse{
+			Base: &base.Base{
+				Code: consts.StatusBadRequest,
+				Msg:  err.Error(),
+			},
+		})
 		return
 	}
 
-	resp := new(user.LoginResponse)
+	us := service.NewUserService(repository.NewUserRepository(database.GetMysqlDB()))
+	u, err := us.Login(req.Username, req.Password, req.Code)
+	if err != nil {
+		c.JSON(consts.StatusInternalServerError, &user.LoginResponse{
+			Base: &base.Base{
+				Code: consts.StatusInternalServerError,
+				Msg:  "internal server error",
+			},
+		})
+		return
+	}
+	if u == nil {
+		c.JSON(consts.StatusBadRequest, &user.LoginResponse{
+			Base: &base.Base{
+				Code: consts.StatusBadRequest,
+				Msg:  "user is not exists / username or password is wrong",
+			},
+		})
+		return
+	}
 
-	c.JSON(consts.StatusOK, resp)
+	accessToken, accessExpireTime, err := middleware.GenerateToken(u.Id)
+	if err != nil {
+		c.JSON(consts.StatusInternalServerError, &user.LoginResponse{
+			Base: &base.Base{
+				Code: consts.StatusInternalServerError,
+				Msg:  "internal server error",
+			},
+		})
+		return
+	}
+
+	cfg := config.GetConfig()
+	refreshToken := uuid.New().String()
+	refreshExpire := time.Now().Add(cfg.Jwt.RefreshTimeout)
+	if err := database.Set(refreshToken, u.Id, refreshExpire); err != nil {
+		c.JSON(consts.StatusInternalServerError, &user.LoginResponse{
+			Base: &base.Base{
+				Code: consts.StatusInternalServerError,
+				Msg:  "internal server error",
+			},
+		})
+		return
+	}
+
+	c.JSON(consts.StatusOK, &user.LoginResponse{
+		Base: &base.Base{
+			Code: consts.StatusOK,
+			Msg:  "success",
+		},
+		Data: &user.UserWithToken{
+			User: &user.User{
+				Id:        u.Id,
+				Username:  u.Username,
+				AvatarUrl: u.AvatarUrl,
+				CreatedAt: u.CreatedAt.Format(dateFormat),
+				UpdatedAt: u.UpdatedAt.Format(dateFormat),
+				DeletedAt: u.DeletedAt.Format(dateFormat),
+			},
+			Token: &user.Token{
+				AccessToken:       accessToken,
+				AccessExpireTime:  accessExpireTime.Format(dateFormat),
+				RefreshToken:      refreshToken,
+				RefreshExpireTime: refreshExpire.Format(dateFormat),
+			},
+		},
+	})
 }
 
 // Register .
@@ -33,13 +114,42 @@ func Register(ctx context.Context, c *app.RequestContext) {
 	var req user.RegisterRequest
 	err = c.BindAndValidate(&req)
 	if err != nil {
-		c.String(consts.StatusBadRequest, err.Error())
+		c.JSON(consts.StatusBadRequest, &user.RegisterResponse{
+			Base: &base.Base{
+				Code: consts.StatusBadRequest,
+				Msg:  err.Error(),
+			},
+		})
 		return
 	}
 
-	resp := new(user.RegisterResponse)
+	us := service.NewUserService(repository.NewUserRepository(database.GetMysqlDB()))
+	ok, err := us.Register(req.Username, req.Password)
+	if err != nil {
+		c.JSON(consts.StatusInternalServerError, &user.RegisterResponse{
+			Base: &base.Base{
+				Code: consts.StatusInternalServerError,
+				Msg:  "internal server error",
+			},
+		})
+		return
+	}
+	if !ok {
+		c.JSON(consts.StatusBadRequest, &user.RegisterResponse{
+			Base: &base.Base{
+				Code: consts.StatusBadRequest,
+				Msg:  "user is registered / username or password is null",
+			},
+		})
+		return
+	}
 
-	c.JSON(consts.StatusOK, resp)
+	c.JSON(consts.StatusCreated, &user.RegisterResponse{
+		Base: &base.Base{
+			Code: consts.StatusCreated,
+			Msg:  "success",
+		},
+	})
 }
 
 // GetUserInfo .
@@ -49,13 +159,50 @@ func GetUserInfo(ctx context.Context, c *app.RequestContext) {
 	var req user.GetUserInfoRequest
 	err = c.BindAndValidate(&req)
 	if err != nil {
-		c.String(consts.StatusBadRequest, err.Error())
+		c.JSON(consts.StatusBadRequest, &user.GetUserInfoResponse{
+			Base: &base.Base{
+				Code: consts.StatusBadRequest,
+				Msg:  err.Error(),
+			},
+		})
 		return
 	}
 
-	resp := new(user.GetUserInfoResponse)
+	us := service.NewUserService(repository.NewUserRepository(database.GetMysqlDB()))
+	u, err := us.GetUserInfoById(req.UserId)
+	if err != nil {
+		c.JSON(consts.StatusInternalServerError, &user.GetUserInfoResponse{
+			Base: &base.Base{
+				Code: consts.StatusInternalServerError,
+				Msg:  "internal server error",
+			},
+		})
+		return
+	}
+	if u == nil {
+		c.JSON(consts.StatusBadRequest, &user.GetUserInfoResponse{
+			Base: &base.Base{
+				Code: consts.StatusBadRequest,
+				Msg:  "user is not exists",
+			},
+		})
+		return
+	}
 
-	c.JSON(consts.StatusOK, resp)
+	c.JSON(consts.StatusOK, &user.GetUserInfoResponse{
+		Base: &base.Base{
+			Code: consts.StatusOK,
+			Msg:  "success",
+		},
+		Data: &user.User{
+			Id:        u.Id,
+			Username:  u.Username,
+			AvatarUrl: u.AvatarUrl,
+			CreatedAt: u.CreatedAt.Format(dateFormat),
+			UpdatedAt: u.UpdatedAt.Format(dateFormat),
+			DeletedAt: u.DeletedAt.Format(dateFormat),
+		},
+	})
 }
 
 // UploadAvatar .
@@ -65,13 +212,43 @@ func UploadAvatar(ctx context.Context, c *app.RequestContext) {
 	var req user.UploadAvatarRequest
 	err = c.BindAndValidate(&req)
 	if err != nil {
-		c.String(consts.StatusBadRequest, err.Error())
+		c.JSON(consts.StatusBadRequest, &user.UploadAvatarResponse{
+			Base: &base.Base{
+				Code: consts.StatusBadRequest,
+				Msg:  err.Error(),
+			},
+		})
 		return
 	}
 
-	resp := new(user.UploadAvatarResponse)
+	uid := middleware.GetUserFromContext(ctx, c)
 
-	c.JSON(consts.StatusOK, resp)
+	us := service.NewUserService(repository.NewUserRepository(database.GetMysqlDB()))
+	u, err := us.UploadAvatar(uid, req.Data)
+	if err != nil {
+		c.JSON(consts.StatusInternalServerError, &user.UploadAvatarResponse{
+			Base: &base.Base{
+				Code: consts.StatusInternalServerError,
+				Msg:  "internal server error",
+			},
+		})
+		return
+	}
+
+	c.JSON(consts.StatusOK, &user.UploadAvatarResponse{
+		Base: &base.Base{
+			Code: consts.StatusOK,
+			Msg:  "success",
+		},
+		Data: &user.User{
+			Id:        u.Id,
+			Username:  u.Username,
+			AvatarUrl: u.AvatarUrl,
+			CreatedAt: u.CreatedAt.Format(dateFormat),
+			UpdatedAt: u.UpdatedAt.Format(dateFormat),
+			DeletedAt: u.DeletedAt.Format(dateFormat),
+		},
+	})
 }
 
 // GetMFA .
@@ -120,4 +297,60 @@ func SearchImg(ctx context.Context, c *app.RequestContext) {
 	resp := new(user.SearchImgResponse)
 
 	c.JSON(consts.StatusOK, resp)
+}
+
+// Refresh .
+// @router /refresh [GET]
+func Refresh(ctx context.Context, c *app.RequestContext) {
+	var err error
+	var req user.RefreshRequest
+	err = c.BindAndValidate(&req)
+	if err != nil {
+		c.String(consts.StatusBadRequest, err.Error())
+		return
+	}
+
+	refreshToken := string(c.Request.Header.Peek("Refresh-Token"))
+	uid, err := database.Get(refreshToken)
+	if err != nil {
+		if err == redis.Nil {
+			c.JSON(consts.StatusUnauthorized, &user.RefreshResponse{
+				Base: &base.Base{
+					Code: consts.StatusUnauthorized,
+					Msg:  "auth has expired",
+				},
+			})
+			return
+		}
+		c.JSON(consts.StatusInternalServerError, &user.RefreshResponse{
+			Base: &base.Base{
+				Code: consts.StatusInternalServerError,
+				Msg:  "internal server error",
+			},
+		})
+		return
+	}
+
+	accessToken, accessExpireTime, err := middleware.GenerateToken(uid)
+	if err != nil {
+		c.JSON(consts.StatusInternalServerError, &user.RefreshResponse{
+			Base: &base.Base{
+				Code: consts.StatusInternalServerError,
+				Msg:  "internal server error",
+			},
+		})
+		return
+	}
+
+	c.JSON(consts.StatusOK, &user.RefreshResponse{
+		Base: &base.Base{
+			Code: consts.StatusOK,
+			Msg:  "success",
+		},
+		Data: &user.Token{
+			AccessToken:      accessToken,
+			AccessExpireTime: accessExpireTime.Format(dateFormat),
+			RefreshToken:     refreshToken,
+		},
+	})
 }

@@ -1,0 +1,25 @@
+server:
+  port: "10001"
+
+database:
+  host: "localhost"
+  port: 3306
+  username: "root"
+  password: "141363"
+  dbname: "west2_work4"
+
+log:
+  level: "debug"
+  path: "/logs/logs.log"
+
+jwt:
+  secretKey: "west2"
+  accessTimeout: 1
+  refreshTimeout: 168
+
+redis:
+  addr: "localhost:6379"
+  password: ""
+
+snowflake:
+  nodeId: 1

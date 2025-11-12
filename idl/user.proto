@@ -23,9 +23,21 @@ message LoginRequest {
     string code = 3[(api.body)="code"];
 }
 
+message Token {
+    string accessToken = 1;
+    string accessExpireTime = 2;
+    string refreshToken = 3;
+    string refreshExpireTime = 4;
+}
+
+message UserWithToken {
+    User user = 1;
+    Token token = 2;
+}
+
 message LoginResponse {
     base.Base base = 1;
-    User data = 2;
+    UserWithToken data = 2;
 }
 
 message RegisterRequest {
@@ -85,6 +97,13 @@ message SearchImgResponse {
     string data = 2;
 }
 
+message RefreshRequest {}
+
+message RefreshResponse {
+    base.Base base = 1;
+    Token data = 2;
+}
+
 service UserService {
     rpc Login(LoginRequest) returns (LoginResponse) {
         option (api.post)="/user/login";
@@ -106,5 +125,8 @@ service UserService {
     }
     rpc SearchImg(SearchImgRequest) returns (SearchImgResponse) {
         option (api.post)="/user/image/search";
+    }
+    rpc Refresh(RefreshRequest) returns (RefreshResponse) {
+        option (api.get)="/refresh";
     }
 }

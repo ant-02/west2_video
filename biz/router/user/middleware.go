@@ -3,7 +3,13 @@
 package user
 
 import (
+	"context"
+	"west2/biz/model/base"
+	"west2/biz/model/user"
+	"west2/pkg/middleware"
+
 	"github.com/cloudwego/hertz/pkg/app"
+	"github.com/cloudwego/hertz/pkg/protocol/consts"
 )
 
 func rootMw() []app.HandlerFunc {
@@ -18,11 +24,35 @@ func _userMw() []app.HandlerFunc {
 
 func _getuserinfoMw() []app.HandlerFunc {
 	// your code...
-	return nil
+	jwtMiddleware, err := middleware.GetJWTMiddleware()
+	if err != nil {
+		return []app.HandlerFunc{
+			func(ctx context.Context, c *app.RequestContext) {
+				c.JSON(consts.StatusInternalServerError, &user.GetUserInfoResponse{
+					Base: &base.Base{
+						Code: consts.StatusInternalServerError,
+						Msg:  "internal server error",
+					},
+				})
+				c.Abort() // 中止后续处理
+			},
+		}
+
+	}
+
+	return []app.HandlerFunc{
+		jwtMiddleware.MiddlewareFunc(),
+	}
 }
 
 func _loginMw() []app.HandlerFunc {
 	// your code...
+	jwtMiddleware, err := middleware.GetJWTMiddleware()
+	if err != nil {
+		return []app.HandlerFunc{
+			jwtMiddleware.LoginHandler,
+		}
+	}
 	return nil
 }
 
@@ -38,7 +68,25 @@ func _avatarMw() []app.HandlerFunc {
 
 func _uploadavatarMw() []app.HandlerFunc {
 	// your code...
-	return nil
+	jwtMiddleware, err := middleware.GetJWTMiddleware()
+	if err != nil {
+		return []app.HandlerFunc{
+			func(ctx context.Context, c *app.RequestContext) {
+				c.JSON(consts.StatusInternalServerError, &user.UploadAvatarResponse{
+					Base: &base.Base{
+						Code: consts.StatusInternalServerError,
+						Msg:  "internal server error",
+					},
+				})
+				c.Abort() // 中止后续处理
+			},
+		}
+
+	}
+
+	return []app.HandlerFunc{
+		jwtMiddleware.MiddlewareFunc(),
+	}
 }
 
 func _imageMw() []app.HandlerFunc {
@@ -62,6 +110,11 @@ func _bindmfaMw() []app.HandlerFunc {
 }
 
 func _getmfaMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}
+
+func _refreshMw() []app.HandlerFunc {
 	// your code...
 	return nil
 }

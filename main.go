@@ -3,12 +3,40 @@
 package main
 
 import (
+	"fmt"
+	"log"
+	"west2/database"
+	"west2/pkg/config"
+	"west2/util"
+
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/app/server"
+	"github.com/hertz-contrib/cors"
 )
 
 func main() {
-	h := server.Default()
+	if err := config.InitConfig(); err != nil {
+		log.Fatalf("failed to load config! err: %v", err)
+	}
+	cfg := config.GetConfig()
+
+	dsn := cfg.Database.Username + ":" + cfg.Database.Password + "@tcp(" + cfg.Database.Host + ":" + cfg.Database.Port + ")/" + cfg.Database.Dbname + "?charset=utf8mb4&parseTime=True&loc=Local"
+	if err := database.InitMysqlDB(dsn); err != nil {
+		log.Fatalf("failed to connect mysql! err: %v", err)
+	}
+
+	if err := database.InitRedis(cfg.Redis.Addr, cfg.Redis.Password); err != nil {
+		log.Fatalf("failed to connect redis! err: %v", err)
+	}
+
+	if err := util.InitSnowflake(cfg.Snowflake.NodeId); err != nil {
+		log.Fatalf("failed to set snowflake node id! err: %v", err)
+	}
+
+	fmt.Println("----------", cfg.Jwt.AccessTimeout, cfg.Jwt.RefreshTimeout)
+	h := server.Default(server.WithHostPorts("0.0.0.0:" + cfg.Server.Port))
+
+	h.Use(cors.Default())
 
 	h.StaticFS("/static", &app.FS{Root: "./static"})
 	register(h)

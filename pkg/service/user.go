@@ -15,6 +15,10 @@ type userService struct {
 }
 
 type UserService interface {
+	Login(username, password, code string) (*model.User, error)
+	Register(username, password string) (bool, error)
+	GetUserInfoById(id string) (*model.User, error)
+	UploadAvatar(id string, data string) (*model.User, error)
 }
 
 func NewUserService(ur repository.UserRepository) UserService {
@@ -44,7 +48,7 @@ func (us *userService) Login(username, password, code string) (*model.User, erro
 func (us *userService) Register(username, password string) (bool, error) {
 	// 判断用户名和密码是否为空
 	if username == "" || password == "" {
-		return false, errors.New("username or password is empty string")
+		return false, nil
 	}
 
 	// 判断用户是否已经被创建
@@ -56,17 +60,14 @@ func (us *userService) Register(username, password string) (bool, error) {
 		log.Printf("failed to get user from repository: username: %s, error: %v", username, err)
 		return false, err
 	}
-
 	// 对密码进行加密
 	hash, err := util.HashPassword(password)
 	if err != nil {
 		log.Printf("failed to encode password: username: %s, error: %v", username, err)
 		return false, err
 	}
-
 	// 雪花算法获取用户id
 	id := util.GetID()
-
 	// 将用户信息存入数据库
 	user := &model.User{
 		Id:       id,
@@ -91,16 +92,23 @@ func (us *userService) GetUserInfoById(id string) (*model.User, error) {
 	return user, nil
 }
 
-func (us *userService) UploadAvatar(id string, data string) (bool, error) {
+func (us *userService) UploadAvatar(id string, data string) (*model.User, error) {
 	if err := util.SaveBase64Image(data, "./static/"+id+".png"); err != nil {
 		log.Printf("failed to save image file: id: %s, error: %v", id, err)
-		return false, err
+		return nil, err
 	}
 
-	if err := us.ur.SetAvatar(id, "http://localhost:8080/static/"+id+".png"); err != nil {
+	if err := us.ur.SetAvatar(id, "/static/"+id+".png"); err != nil {
 		log.Printf("failed to set user's avatar url: id: %s, error: %v", id, err)
-		return false, err
+		return nil, err
 	}
 
-	return true, nil
+	u, err := us.ur.GetUserById(id)
+	if err != nil {
+		log.Printf("failed to get user info by id: id: %s, error: %v", id, err)
+		return nil, err
+	}
+
+	u.Password = ""
+	return u, nil
 }
