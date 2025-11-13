@@ -14,9 +14,9 @@ message Video {
     string videoUrl = 4[(api.body)="videoUrl"];
     string title = 5[(api.body)="title"];
     string description = 6[(api.body)="description"];
-    int64 visitCount = 7[(api.body)="visitCount"];
-    int64 likeCount = 8[(api.body)="likeCount"];
-    int64 commentCount = 9[(api.body)="commentCount"];
+    optional int64 visitCount = 7[(api.body)="visitCount"];
+    optional int64 likeCount = 8[(api.body)="likeCount"];
+    optional int64 commentCount = 9[(api.body)="commentCount"];
     string createdAt = 10[(api.body)="createdAt"];
     string updatedAt = 11[(api.body)="updatedAt"];
     string deletedAt = 12[(api.body)="deletedAt"];

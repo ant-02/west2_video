@@ -20,6 +20,9 @@ import (
 var dateFormat string = "2006-01-02T15:04:05.000Z"
 
 func videoToResVideo(v *model.Video) *video.Video {
+	visitCount := v.VisitCount
+	likeCount := v.LikeCount
+	commentCount := v.CommentCount
 	return &video.Video{
 		Id:           v.Id,
 		Uid:          v.Uid,
@@ -27,9 +30,9 @@ func videoToResVideo(v *model.Video) *video.Video {
 		CoverUrl:     v.CoverUrl,
 		Title:        v.Title,
 		Description:  v.Description,
-		VisitCount:   v.VisitCount,
-		LikeCount:    v.LikeCount,
-		CommentCount: v.CommentCount,
+		VisitCount:   &visitCount,
+		LikeCount:    &likeCount,
+		CommentCount: &commentCount,
 		CreatedAt:    v.CreatedAt.Format(dateFormat),
 		UpdatedAt:    v.UpdatedAt.Format(dateFormat),
 		DeletedAt:    v.DeletedAt.Format(dateFormat),
