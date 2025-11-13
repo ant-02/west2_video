@@ -7,7 +7,6 @@ import (
 	"west2/database"
 	"west2/pkg/model"
 
-	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
 
@@ -22,9 +21,9 @@ type videoRepository struct {
 type VideoRepository interface {
 	GetVideosByLatestTime(latestTime string) ([]*model.Video, error)
 	CreateVideo(video *model.Video) error
-	GetVideosByUid(uid string, pageNum, pageSize int64) ([]*model.Video, error)
+	GetVideosByUid(uid string, pageNum, pageSize int64) ([]*model.Video, int64, error)
 	GetVideosGroupByVisitCount(pageNum, pageSize int64) ([]*model.Video, error)
-	GetVideosByKeywords(keywords, fromDate, toDate, username string, pageNum, pageSize int64) ([]*model.Video, error)
+	GetVideosByKeywords(keywords, fromDate, toDate, username string, pageNum, pageSize int64) ([]*model.Video, int64, error)
 }
 
 func NewVideoRepository(db *gorm.DB) VideoRepository {
@@ -57,25 +56,40 @@ func (vr *videoRepository) CreateVideo(video *model.Video) error {
 	return database.Del([]string{key})
 }
 
-func (vr *videoRepository) GetVideosByUid(uid string, pageNum, pageSize int64) ([]*model.Video, error) {
+func (vr *videoRepository) GetVideosByUid(uid string, pageNum, pageSize int64) ([]*model.Video, int64, error) {
 	var videos []*model.Video
-	err := vr.db.Where("uid = ?", uid).
+	var total int64
+	var err error
+
+	tx := vr.db.Model(&model.Video{}).
+		Where("uid = ?", uid).
+		Where("deleted_at IS NULL")
+
+	err = tx.Count(&total).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	err = vr.db.Where("uid = ?", uid).
 		Where("deleted_at IS NULL").
 		Offset((int(pageNum) - 1) * int(pageSize)).
 		Limit(int(pageSize)).
 		Find(&videos).Error
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
-	return videos, nil
+	return videos, total, nil
 }
 
 func (vr *videoRepository) GetVideosGroupByVisitCount(pageNum, pageSize int64) ([]*model.Video, error) {
 	var videos []*model.Video
 	first, end := (pageNum-1)*pageSize, pageNum*pageSize
 	videoStrings, err := database.LRange(key, first, end)
-	if err == nil {
+	if err != nil || videoStrings == nil {
+		return nil, err
+	}
+	if len(videoStrings) > 0 {
 		for _, s := range videoStrings {
 			var v model.Video
 			if err := json.Unmarshal([]byte(s), &v); err != nil {
@@ -84,9 +98,6 @@ func (vr *videoRepository) GetVideosGroupByVisitCount(pageNum, pageSize int64) (
 			videos = append(videos, &v)
 		}
 		return videos, nil
-	}
-	if err != redis.Nil {
-		return nil, err
 	}
 
 	err = vr.db.Where("deleted_at IS NULL").
@@ -98,17 +109,26 @@ func (vr *videoRepository) GetVideosGroupByVisitCount(pageNum, pageSize int64) (
 		return nil, err
 	}
 
-	err = database.RPush(key, videos)
-	if err != nil {
-		return nil, err
+	for _, v := range videos {
+		j, err := json.Marshal(v)
+		if err != nil {
+			return nil, err
+		}
+		err = database.RPush(key, j)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return videos, nil
 }
 
-func (vr *videoRepository) GetVideosByKeywords(keywords, fromDate, toDate, username string, pageNum, pageSize int64) ([]*model.Video, error) {
+func (vr *videoRepository) GetVideosByKeywords(keywords, fromDate, toDate, uid string, pageNum, pageSize int64) ([]*model.Video, int64, error) {
 	var videos []*model.Video
-	tx := vr.db.Where("title LIKE ? or description LIKE ?", "%"+keywords+"%", "%"+keywords+"%")
+	var total int64
+	var err error
+	tx := vr.db.Model(&model.Video{}).
+		Where("title LIKE ? or description LIKE ?", "%"+keywords+"%", "%"+keywords+"%")
 
 	if fromDate != "" {
 		tx = tx.Where("from_date > ?", fromDate)
@@ -116,17 +136,22 @@ func (vr *videoRepository) GetVideosByKeywords(keywords, fromDate, toDate, usern
 	if toDate != "" {
 		tx = tx.Where("to_date < ?", toDate)
 	}
-	if username != "" {
-		tx = tx.Where("username = ?", username)
+	if uid != "" {
+		tx = tx.Where("uid = ?", uid)
 	}
 
-	err := tx.Offset((int(pageNum) - 1) * int(pageSize)).
+	err = tx.Count(&total).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	err = tx.Offset((int(pageNum) - 1) * int(pageSize)).
 		Limit(int(pageSize)).
 		Find(&videos).Error
 
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
-	return videos, nil
+	return videos, total, nil
 }

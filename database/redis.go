@@ -49,3 +49,7 @@ func Del(key []string) error {
 	_, err := client.Del(ctx, key...).Result()
 	return err
 }
+
+func LLen(key string) (int64, error) {
+	return client.LLen(ctx, key).Result()
+}

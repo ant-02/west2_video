@@ -8,7 +8,7 @@ type Video struct {
 	Title        string    `gorm:"type:varchar(100);not null"`
 	Description  string    `gorm:"type:varchar(256);not null"`
 	VideoUrl     string    `gorm:"type:varchar(256);unique;not null"`
-	CoverUrl     string    `gorm:"type:varchar(256);unique"`
+	CoverUrl     string    `gorm:"type:varchar(256)"`
 	VisitCount   int64     `gorm:"type:int;default:0"`
 	LikeCount    int64     `gorm:"type:int;default:0"`
 	CommentCount int64     `gorm:"type:int;default:0"`

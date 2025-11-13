@@ -24,7 +24,7 @@ message Video {
 
 message VideoList {
     repeated Video items = 1;
-    int64 total = 2;
+    optional int64 total = 2;
 }
 
 message VideoStreamRequest {
@@ -73,6 +73,7 @@ message SearchRequest {
     int64 pageSize = 3[(api.body)="pageSize"];
     string fromDate = 4[(api.body)="fromDate"];
     string toDate = 5[(api.body)="toDate"];
+    string username = 6[(api.body)="username"];
 }
 
 message SearchResponse {

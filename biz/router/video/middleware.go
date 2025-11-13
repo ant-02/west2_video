@@ -29,12 +29,48 @@ func _videostreamMw() []app.HandlerFunc {
 
 func _publishlistMw() []app.HandlerFunc {
 	// your code...
-	return nil
+	jwtMiddleware, err := middleware.GetJWTMiddleware()
+	if err != nil {
+		return []app.HandlerFunc{
+			func(ctx context.Context, c *app.RequestContext) {
+				c.JSON(consts.StatusInternalServerError, &user.UploadAvatarResponse{
+					Base: &base.Base{
+						Code: consts.StatusInternalServerError,
+						Msg:  "internal server error",
+					},
+				})
+				c.Abort() // 中止后续处理
+			},
+		}
+
+	}
+
+	return []app.HandlerFunc{
+		jwtMiddleware.MiddlewareFunc(),
+	}
 }
 
 func _popularMw() []app.HandlerFunc {
 	// your code...
-	return nil
+	jwtMiddleware, err := middleware.GetJWTMiddleware()
+	if err != nil {
+		return []app.HandlerFunc{
+			func(ctx context.Context, c *app.RequestContext) {
+				c.JSON(consts.StatusInternalServerError, &user.UploadAvatarResponse{
+					Base: &base.Base{
+						Code: consts.StatusInternalServerError,
+						Msg:  "internal server error",
+					},
+				})
+				c.Abort() // 中止后续处理
+			},
+		}
+
+	}
+
+	return []app.HandlerFunc{
+		jwtMiddleware.MiddlewareFunc(),
+	}
 }
 
 func _publishMw() []app.HandlerFunc {

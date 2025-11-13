@@ -58,7 +58,7 @@ func VideoStream(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
-	vs := service.NewVideoService(repository.NewVideoRepository(database.GetMysqlDB()))
+	vs := service.NewVideoService(repository.NewVideoRepository(database.GetMysqlDB()), repository.NewUserRepository(database.GetMysqlDB()))
 	videos, err := vs.GetVideoStream(req.LatestTime)
 	if err != nil {
 		c.JSON(consts.StatusInternalServerError, &video.VideoStreamResponse{
@@ -94,7 +94,7 @@ func Publish(ctx context.Context, c *app.RequestContext) {
 
 	uid := middleware.GetUserFromContext(ctx, c)
 
-	vs := service.NewVideoService(repository.NewVideoRepository(database.GetMysqlDB()))
+	vs := service.NewVideoService(repository.NewVideoRepository(database.GetMysqlDB()), repository.NewUserRepository(database.GetMysqlDB()))
 	err = vs.Publish(req.Title, req.Description, req.Data, uid)
 	if err != nil {
 		c.JSON(consts.StatusInternalServerError, &video.PublishResponse{
@@ -125,9 +125,29 @@ func PublishList(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
-	resp := new(video.PublishListResponse)
+	vs := service.NewVideoService(repository.NewVideoRepository(database.GetMysqlDB()), repository.NewUserRepository(database.GetMysqlDB()))
+	videos, total, err := vs.GetVideosByUid(req.Uid, req.PageNum, req.PageSize)
 
-	c.JSON(consts.StatusOK, resp)
+	if err != nil {
+		c.JSON(consts.StatusInternalServerError, &video.PublishListResponse{
+			Base: &base.Base{
+				Code: consts.StatusInternalServerError,
+				Msg:  "inernal server error",
+			},
+		})
+		return
+	}
+
+	c.JSON(consts.StatusOK, &video.PublishListResponse{
+		Base: &base.Base{
+			Code: consts.StatusOK,
+			Msg:  "success",
+		},
+		Data: &video.VideoList{
+			Items: videosToResVideos(videos),
+			Total: &total,
+		},
+	})
 }
 
 // Popular .
@@ -140,10 +160,28 @@ func Popular(ctx context.Context, c *app.RequestContext) {
 		c.String(consts.StatusBadRequest, err.Error())
 		return
 	}
+	vs := service.NewVideoService(repository.NewVideoRepository(database.GetMysqlDB()), repository.NewUserRepository(database.GetMysqlDB()))
+	videos, err := vs.GetVideosByVisitCount(req.PageNum, req.PageSize)
 
-	resp := new(video.PopularResponse)
+	if err != nil {
+		c.JSON(consts.StatusInternalServerError, &video.PopularResponse{
+			Base: &base.Base{
+				Code: consts.StatusInternalServerError,
+				Msg:  "inernal server error",
+			},
+		})
+		return
+	}
 
-	c.JSON(consts.StatusOK, resp)
+	c.JSON(consts.StatusOK, &video.PopularResponse{
+		Base: &base.Base{
+			Code: consts.StatusOK,
+			Msg:  "success",
+		},
+		Data: &video.VideoList{
+			Items: videosToResVideos(videos),
+		},
+	})
 }
 
 // Search .
@@ -157,7 +195,27 @@ func Search(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
-	resp := new(video.SearchResponse)
+	vs := service.NewVideoService(repository.NewVideoRepository(database.GetMysqlDB()), repository.NewUserRepository(database.GetMysqlDB()))
+	videos, total, err := vs.Search(req.Keywords, req.FromDate, req.ToDate, req.Username, req.PageNum, req.PageSize)
 
-	c.JSON(consts.StatusOK, resp)
+	if err != nil {
+		c.JSON(consts.StatusInternalServerError, &video.SearchResponse{
+			Base: &base.Base{
+				Code: consts.StatusInternalServerError,
+				Msg:  "inernal server error",
+			},
+		})
+		return
+	}
+
+	c.JSON(consts.StatusOK, &video.SearchResponse{
+		Base: &base.Base{
+			Code: consts.StatusOK,
+			Msg:  "success",
+		},
+		Data: &video.VideoList{
+			Items: videosToResVideos(videos),
+			Total: &total,
+		},
+	})
 }
