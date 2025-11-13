@@ -35,3 +35,17 @@ func Exists(key string) (bool, error) {
 	exists, err := client.Exists(ctx, key).Result()
 	return exists == 1, err
 }
+
+func RPush(key string, value interface{}) error {
+	_, err := client.RPush(ctx, key, value).Result()
+	return err
+}
+
+func LRange(key string, first int64, second int64) ([]string, error) {
+	return client.LRange(ctx, key, first, second).Result()
+}
+
+func Del(key []string) error {
+	_, err := client.Del(ctx, key...).Result()
+	return err
+}

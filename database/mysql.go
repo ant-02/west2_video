@@ -36,7 +36,7 @@ func InitMysqlDB(dsn string) error {
 }
 
 func autoMigrate() error {
-	return db.AutoMigrate(&model.User{})
+	return db.AutoMigrate(&model.User{}, &model.Video{})
 }
 
 func GetMysqlDB() *gorm.DB {

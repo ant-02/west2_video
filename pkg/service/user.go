@@ -93,12 +93,12 @@ func (us *userService) GetUserInfoById(id string) (*model.User, error) {
 }
 
 func (us *userService) UploadAvatar(id string, data string) (*model.User, error) {
-	if err := util.SaveBase64Image(data, "./static/"+id+".png"); err != nil {
+	if err := util.SaveBase64Image(data, "./static/img/"+id+".png"); err != nil {
 		log.Printf("failed to save image file: id: %s, error: %v", id, err)
 		return nil, err
 	}
 
-	if err := us.ur.SetAvatar(id, "/static/"+id+".png"); err != nil {
+	if err := us.ur.SetAvatar(id, "/static/img/"+id+".png"); err != nil {
 		log.Printf("failed to set user's avatar url: id: %s, error: %v", id, err)
 		return nil, err
 	}

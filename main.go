@@ -3,7 +3,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"west2/database"
 	"west2/pkg/config"
@@ -33,7 +32,6 @@ func main() {
 		log.Fatalf("failed to set snowflake node id! err: %v", err)
 	}
 
-	fmt.Println("----------", cfg.Jwt.AccessTimeout, cfg.Jwt.RefreshTimeout)
 	h := server.Default(server.WithHostPorts("0.0.0.0:" + cfg.Server.Port))
 
 	h.Use(cors.Default())

@@ -1,0 +1,99 @@
+syntax = "proto3";
+
+package video;
+
+option go_package = "/video";
+
+import "api.proto";
+import "base.proto";
+
+message Video {
+    string id = 1[(api.body)="id"];
+    string uid = 2[(api.body)="uid"];
+    string coverUrl = 3[(api.body)="coverUrl"];
+    string videoUrl = 4[(api.body)="videoUrl"];
+    string title = 5[(api.body)="title"];
+    string description = 6[(api.body)="description"];
+    int64 visitCount = 7[(api.body)="visitCount"];
+    int64 likeCount = 8[(api.body)="likeCount"];
+    int64 commentCount = 9[(api.body)="commentCount"];
+    string createdAt = 10[(api.body)="createdAt"];
+    string updatedAt = 11[(api.body)="updatedAt"];
+    string deletedAt = 12[(api.body)="deletedAt"];
+}
+
+message VideoList {
+    repeated Video items = 1;
+    int64 total = 2;
+}
+
+message VideoStreamRequest {
+    string latestTime = 13[(api.path)="latestTime"];
+}
+
+message VideoStreamResponse {
+    base.Base base = 1;
+    VideoList data = 2;
+}
+
+message PublishRequest {
+    string data = 1[(api.body)="data"];
+    string title = 2[(api.body)="title"];
+    string description = 3[(api.body)="description"];
+}
+
+message PublishResponse {
+    base.Base base = 1;
+}
+
+message PublishListRequest {
+    string uid = 1[(api.body)="uid"];
+    int64 pageNum = 2[(api.body)="pageNum"];
+    int64 pageSize = 3[(api.body)="pageSize"];
+}
+
+message PublishListResponse {
+    base.Base base = 1;
+    VideoList data = 2;
+}
+
+message PopularRequest {
+    int64 pageNum = 1[(api.path)="pageNum"];
+    int64 pageSize = 2[(api.path)="pageSize"];
+}
+
+message PopularResponse {
+    base.Base base = 1;
+    VideoList data = 2;
+}
+
+message SearchRequest {
+    string keywords = 1[(api.body)="keywords"];
+    int64 pageNum = 2[(api.body)="pageNum"];
+    int64 pageSize = 3[(api.body)="pageSize"];
+    string fromDate = 4[(api.body)="fromDate"];
+    string toDate = 5[(api.body)="toDate"];
+}
+
+message SearchResponse {
+    base.Base base = 1;
+    VideoList data = 2;
+}
+
+service VideoService {
+    rpc VideoStream(VideoStreamRequest) returns (VideoStreamResponse) {
+        option (api.get)="/video/feed"; 
+    }
+    rpc Publish(PublishRequest) returns (PublishResponse) {
+        option (api.post)="/video/publish";
+    }
+    rpc PublishList(PublishListRequest) returns (PublishListResponse) {
+        option (api.get)="/video/list";
+    }
+    rpc Popular(PopularRequest) returns (PopularResponse) {
+        option (api.get)="/video/popular";
+    }
+    rpc Search(SearchRequest) returns (SearchResponse) {
+        option (api.post)="/video/search";
+    }
+}

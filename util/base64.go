@@ -35,6 +35,23 @@ func SaveBase64Image(base64Data, savePath string) error {
 	return nil
 }
 
+func Base64ToVideo(base64Str, outputPath string) error {
+	// 解码 Base64 字符串
+	videoData, err := base64.StdEncoding.DecodeString(base64Str)
+	if err != nil {
+		return fmt.Errorf("Base64 解码失败: %v", err)
+	}
+
+	// 写入视频文件
+	err = os.WriteFile(outputPath, videoData, 0644)
+	if err != nil {
+		return fmt.Errorf("文件写入失败: %v", err)
+	}
+
+	fmt.Printf("视频文件已创建: %s (%d bytes)\n", outputPath, len(videoData))
+	return nil
+}
+
 // 清理Base64数据，移除Data URL前缀
 func cleanBase64Data(data string) string {
 	if strings.Contains(data, "base64,") {
