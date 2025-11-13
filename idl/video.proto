@@ -28,7 +28,7 @@ message VideoList {
 }
 
 message VideoStreamRequest {
-    string latestTime = 13[(api.path)="latestTime"];
+    string latestTime = 1[(api.query)="latestTime"];
 }
 
 message VideoStreamResponse {
@@ -58,8 +58,8 @@ message PublishListResponse {
 }
 
 message PopularRequest {
-    int64 pageNum = 1[(api.path)="pageNum"];
-    int64 pageSize = 2[(api.path)="pageSize"];
+    int64 pageNum = 1[(api.query)="pageNum"];
+    int64 pageSize = 2[(api.query)="pageSize"];
 }
 
 message PopularResponse {

@@ -2,6 +2,8 @@ package repository
 
 import (
 	"encoding/json"
+	"strconv"
+	"time"
 	"west2/database"
 	"west2/pkg/model"
 
@@ -32,7 +34,11 @@ func NewVideoRepository(db *gorm.DB) VideoRepository {
 func (vr *videoRepository) GetVideosByLatestTime(latestTime string) ([]*model.Video, error) {
 	var videos []*model.Video
 
-	err := vr.db.Where("created_at > ?", latestTime).
+	t, err := strconv.ParseInt(latestTime, 10, 64)
+	if err != nil {
+		return nil, err
+	}
+	err = vr.db.Where("created_at > ?", time.Unix(t, 0)).
 		Where("deleted_at IS NULL").
 		Find(&videos).Error
 	if err != nil {

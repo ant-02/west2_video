@@ -50,7 +50,7 @@ message RegisterResponse {
 }
 
 message GetUserInfoRequest {
-    string userId = 1[(api.path)="userId"];
+    string userId = 1[(api.query)="userId"];
 }
 
 message GetUserInfoResponse {
