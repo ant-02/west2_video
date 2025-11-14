@@ -1,0 +1,68 @@
+syntax = "proto3";
+
+package comment;
+
+option go_package = "/comment";
+
+import "api.proto";
+import "base.proto";
+
+message Comment {
+    string id = 1[(api.body)="id"];
+    string uid = 2[(api.body)="uid"];
+    string videoId = 3[(api.body)="videoId"];
+    string parentId = 4[(api.body)="parentId"];
+    optional int64 likeCount = 5[(api.body)="likeCount"];
+    optional int64 childCount = 6[(api.body)="childCount"];
+    string content = 7[(api.body)="content"];
+    string createdAt = 8[(api.body)="createdAt"];
+    string updatedAt = 9[(api.body)="updatedAt"];
+    string deletedAt = 10[(api.body)="deletedAt"];
+}
+
+message CommentList {
+    repeated Comment Comment = 1;
+}
+
+message CommentPublishRequest {
+    string videoId = 1[(api.body)="videoId"];
+    string commentId = 2[(api.body)="commentId"];
+    string content = 3[(api.body)="content"];
+}
+
+message CommentPublishResponse {
+    base.Base base = 1;
+}
+
+message CommentListRequest {
+    string videoId = 1[(api.query)="videoId"];
+    string commentId = 2[(api.query)="commentId"];
+    int64 pageNum = 2[(api.query)="pageNum"];
+    int64 pageSize = 3[(api.query)="pageSize"];
+}
+
+message CommentListResponse {
+    base.Base base = 1;
+    CommentList data = 2;
+}
+
+message DeleteRequest {
+    string videoId = 1[(api.body)="videoId"];
+    string commentId = 2[(api.body)="commentId"];
+}
+
+message DeleteResponse {
+    base.Base base = 1;
+}
+
+service CommentService {
+    rpc CommentPublish(CommentPublishRequest) returns (CommentPublishResponse) {
+        option (api.post)="/comment/publish";
+    }
+    rpc CommentList(CommentListRequest) returns(CommentListResponse) {
+        option (api.get)="/comment/list";
+    }
+    rpc Delete(DeleteRequest) returns (DeleteResponse) {
+        option (api.delete)="/comment/delete";
+    }
+}

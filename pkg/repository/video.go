@@ -24,6 +24,9 @@ type VideoRepository interface {
 	GetVideosByUid(uid string, pageNum, pageSize int64) ([]*model.Video, int64, error)
 	GetVideosGroupByVisitCount(pageNum, pageSize int64) ([]*model.Video, error)
 	GetVideosByKeywords(keywords, fromDate, toDate, username string, pageNum, pageSize int64) ([]*model.Video, int64, error)
+	AddLikeCount(id string) error
+	SubtractLikeCount(id string) error
+	GetVideosByIds(ids []*string) ([]*model.Video, error)
 }
 
 func NewVideoRepository(db *gorm.DB) VideoRepository {
@@ -154,4 +157,22 @@ func (vr *videoRepository) GetVideosByKeywords(keywords, fromDate, toDate, uid s
 	}
 
 	return videos, total, nil
+}
+
+func (vr *videoRepository) AddLikeCount(id string) error {
+	return vr.db.Model(&model.Video{}).Where("id = ?", id).Update("like_count", gorm.Expr("like_count + ?", 1)).Error
+}
+
+func (vr *videoRepository) SubtractLikeCount(id string) error {
+	return vr.db.Model(&model.Video{}).Where("id = ?", id).Update("like_count", gorm.Expr("like_count - ?", 1)).Error
+}
+
+func (vr *videoRepository) GetVideosByIds(ids []*string) ([]*model.Video, error) {
+	var videos []*model.Video
+	err := vr.db.Where("id IN ?", ids).Find(&videos).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return videos, nil
 }

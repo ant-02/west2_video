@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+package like;
+
+option go_package = "/like";
+
+import "api.proto";
+import "base.proto";
+import "video.proto";
+
+message LikeActionRequest {
+    string videoId = 1[(api.body)="videoId"];
+    string commentId = 2[(api.body)="commentId"];
+    int64 actionType = 3[(api.body)="actionType"];
+}
+
+message LikeActionResponse {
+    base.Base base = 1;
+    string msg = 2;
+}
+
+message LikeListRequest {
+    string uid = 1[(api.query)="uid"];
+    int64 pageNum = 2[(api.query)="pageNum"];
+    int64 pageSize = 3[(api.query)="pageSize"];
+}
+
+message LikeListResponse {
+    base.Base base = 1;
+    video.VideoList data = 2;
+}
+
+service LikeService {
+    rpc LikeAction(LikeActionRequest) returns (LikeActionResponse) {
+        option (api.post)="/like/action";
+    }
+    rpc LikeList(LikeListRequest) returns (LikeActionResponse) {
+        option (api.get)="/like/list";
+    }
+}

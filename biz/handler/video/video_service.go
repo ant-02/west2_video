@@ -17,36 +17,6 @@ import (
 	"github.com/cloudwego/hertz/pkg/protocol/consts"
 )
 
-var dateFormat string = "2006-01-02T15:04:05.000Z"
-
-func videoToResVideo(v *model.Video) *video.Video {
-	visitCount := v.VisitCount
-	likeCount := v.LikeCount
-	commentCount := v.CommentCount
-	return &video.Video{
-		Id:           v.Id,
-		Uid:          v.Uid,
-		VideoUrl:     v.VideoUrl,
-		CoverUrl:     v.CoverUrl,
-		Title:        v.Title,
-		Description:  v.Description,
-		VisitCount:   &visitCount,
-		LikeCount:    &likeCount,
-		CommentCount: &commentCount,
-		CreatedAt:    v.CreatedAt.Format(dateFormat),
-		UpdatedAt:    v.UpdatedAt.Format(dateFormat),
-		DeletedAt:    v.DeletedAt.Format(dateFormat),
-	}
-}
-
-func videosToResVideos(videos []*model.Video) []*video.Video {
-	var videosRes []*video.Video
-	for _, v := range videos {
-		videosRes = append(videosRes, videoToResVideo(v))
-	}
-	return videosRes
-}
-
 // VideoStream .
 // @router /video/feed [GET]
 func VideoStream(ctx context.Context, c *app.RequestContext) {
@@ -76,7 +46,7 @@ func VideoStream(ctx context.Context, c *app.RequestContext) {
 			Msg:  "success",
 		},
 		Data: &video.VideoList{
-			Items: videosToResVideos(videos),
+			Items: model.VideosToResVideos(videos),
 		},
 	})
 }
@@ -144,7 +114,7 @@ func PublishList(ctx context.Context, c *app.RequestContext) {
 			Msg:  "success",
 		},
 		Data: &video.VideoList{
-			Items: videosToResVideos(videos),
+			Items: model.VideosToResVideos(videos),
 			Total: &total,
 		},
 	})
@@ -179,7 +149,7 @@ func Popular(ctx context.Context, c *app.RequestContext) {
 			Msg:  "success",
 		},
 		Data: &video.VideoList{
-			Items: videosToResVideos(videos),
+			Items: model.VideosToResVideos(videos),
 		},
 	})
 }
@@ -214,7 +184,7 @@ func Search(ctx context.Context, c *app.RequestContext) {
 			Msg:  "success",
 		},
 		Data: &video.VideoList{
-			Items: videosToResVideos(videos),
+			Items: model.VideosToResVideos(videos),
 			Total: &total,
 		},
 	})
