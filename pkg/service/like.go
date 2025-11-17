@@ -62,7 +62,7 @@ func (ls *likeService) LikeAction(like *model.Like) error {
 	}
 	err = ls.lr.SetLikeStatus(l.Id, like.Status)
 	if err != nil {
-log.Printf("failed to set like status: likeId: %s, %v", l.Id, err)
+		log.Printf("failed to set like status: likeId: %s, %v", l.Id, err)
 	}
 	return err
 }

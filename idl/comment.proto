@@ -21,7 +21,7 @@ message Comment {
 }
 
 message CommentList {
-    repeated Comment Comment = 1;
+    repeated Comment items = 1;
 }
 
 message CommentPublishRequest {
@@ -37,8 +37,8 @@ message CommentPublishResponse {
 message CommentListRequest {
     string videoId = 1[(api.query)="videoId"];
     string commentId = 2[(api.query)="commentId"];
-    int64 pageNum = 2[(api.query)="pageNum"];
-    int64 pageSize = 3[(api.query)="pageSize"];
+    int64 pageNum = 3[(api.query)="pageNum"];
+    int64 pageSize = 4[(api.query)="pageSize"];
 }
 
 message CommentListResponse {
