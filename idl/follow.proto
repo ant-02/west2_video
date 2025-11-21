@@ -1,0 +1,75 @@
+syntax = "proto3";
+
+package follow;
+
+option go_package = "/follow";
+
+import "api.proto";
+import "base.proto";
+
+message User {
+    string id = 1;
+    string username = 2;
+    string avatarUrl = 3;
+}
+
+message UserList {
+    repeated User items = 1;
+    int64 total = 2;
+}
+
+message FollowActionRequest {
+    string toUserId = 1[(api.body)="toUserId"];
+    int64 actionType = 2[(api.body)="actionType"];
+}
+
+message FollowActionResponse {
+    base.Base base = 1; 
+}
+
+message FollowerListRequest {
+    string userId = 1[(api.query)="userId"];
+    int64 pageNum = 2[(api.query)="pageNum"];
+    int64 pageSize = 3[(api.query)="pageSize"];
+}
+
+message FollowerListResponse {
+    base.Base base = 1;
+    UserList data = 2;
+}
+
+message FollowedListRequest {
+    string userId = 1[(api.query)="userId"];
+    int64 pageNum = 2[(api.query)="pageNum"];
+    int64 pageSize = 3[(api.query)="pageSize"];
+}
+
+message FollowedListResponse {
+    base.Base base = 1;
+    UserList data = 2;
+}
+
+message FriendListRequest {
+    int64 pageNum = 1[(api.query)="pageNum"];
+    int64 pageSize = 2[(api.query)="pageSize"];
+}
+
+message FriendListResponse {
+    base.Base base = 1;
+    UserList data = 2;
+}
+
+service FollowService {
+    rpc FollowAction(FollowActionRequest) returns (FollowActionResponse) {
+        option (api.post)="/relation/action";
+    }
+    rpc FollowerList(FollowerListRequest) returns (FollowerListResponse) {
+        option (api.get)="/following/list";
+    }
+    rpc FollowedList(FollowerListRequest) returns (FollowerListResponse) {
+        option (api.get)="/follower/list";
+    }
+    rpc FriendList(FriendListRequest) returns (FriendListResponse) {
+        option (api.get)="/friends/list";
+    }
+}
