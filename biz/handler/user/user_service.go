@@ -73,7 +73,8 @@ func Login(ctx context.Context, c *app.RequestContext) {
 	cfg := config.GetConfig()
 	refreshToken := uuid.New().String()
 	refreshExpire := time.Now().Add(cfg.Jwt.RefreshTimeout)
-	if err := database.Set(refreshToken, u.Id, refreshExpire); err != nil {
+	instance := database.GetRedisInstance()
+	if err := instance.Set(ctx, refreshToken, u.Id, refreshExpire); err != nil {
 		c.JSON(consts.StatusInternalServerError, &user.LoginResponse{
 			Base: &base.Base{
 				Code: consts.StatusInternalServerError,
@@ -311,7 +312,8 @@ func Refresh(ctx context.Context, c *app.RequestContext) {
 	}
 
 	refreshToken := string(c.Request.Header.Peek("Refresh-Token"))
-	uid, err := database.Get(refreshToken)
+	instance := database.GetRedisInstance()
+	uid, err := instance.Get(ctx, refreshToken)
 	if err != nil {
 		if err == redis.Nil {
 			c.JSON(consts.StatusUnauthorized, &user.RefreshResponse{

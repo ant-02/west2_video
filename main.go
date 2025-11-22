@@ -3,6 +3,7 @@
 package main
 
 import (
+	"context"
 	"log"
 	"west2/database"
 	"west2/pkg/config"
@@ -14,6 +15,7 @@ import (
 )
 
 func main() {
+	ctx := context.Background()
 	if err := config.InitConfig(); err != nil {
 		log.Fatalf("failed to load config! err: %v", err)
 	}
@@ -24,7 +26,7 @@ func main() {
 		log.Fatalf("failed to connect mysql! err: %v", err)
 	}
 
-	if err := database.InitRedis(cfg.Redis.Addr, cfg.Redis.Password); err != nil {
+	if err := database.InitRedis(ctx, cfg.Redis.Addr, cfg.Redis.Password); err != nil {
 		log.Fatalf("failed to connect redis! err: %v", err)
 	}
 

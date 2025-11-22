@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"encoding/json"
 	"strconv"
 	"time"
@@ -55,8 +56,9 @@ func (vr *videoRepository) CreateVideo(video *model.Video) error {
 	if err != nil {
 		return err
 	}
-
-	return database.Del([]string{key})
+	instance := database.GetRedisInstance()
+	ctx := context.Background()
+	return instance.Del(ctx, []string{key})
 }
 
 func (vr *videoRepository) GetVideosByUid(uid string, pageNum, pageSize int64) ([]*model.Video, int64, error) {
@@ -88,7 +90,9 @@ func (vr *videoRepository) GetVideosByUid(uid string, pageNum, pageSize int64) (
 func (vr *videoRepository) GetVideosGroupByVisitCount(pageNum, pageSize int64) ([]*model.Video, error) {
 	var videos []*model.Video
 	first, end := (pageNum-1)*pageSize, pageNum*pageSize
-	videoStrings, err := database.LRange(key, first, end)
+	instance := database.GetRedisInstance()
+	ctx := context.Background()
+	videoStrings, err := instance.LRange(ctx, key, first, end)
 	if err != nil || videoStrings == nil {
 		return nil, err
 	}
@@ -117,7 +121,9 @@ func (vr *videoRepository) GetVideosGroupByVisitCount(pageNum, pageSize int64) (
 		if err != nil {
 			return nil, err
 		}
-		err = database.RPush(key, j)
+		instance := database.GetRedisInstance()
+		ctx := context.Background()
+		err = instance.RPush(ctx, key, j)
 		if err != nil {
 			return nil, err
 		}

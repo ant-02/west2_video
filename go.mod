@@ -6,7 +6,9 @@ require (
 	github.com/bwmarrin/snowflake v0.3.0
 	github.com/cloudwego/hertz v0.10.3
 	github.com/google/uuid v1.6.0
+	github.com/hertz-contrib/cors v0.1.0
 	github.com/hertz-contrib/jwt v1.0.4
+	github.com/hertz-contrib/websocket v0.2.0
 	github.com/redis/go-redis/v9 v9.16.0
 	github.com/spf13/viper v1.21.0
 	golang.org/x/crypto v0.43.0
@@ -31,8 +33,6 @@ require (
 	github.com/go-viper/mapstructure/v2 v2.4.0 // indirect
 	github.com/golang-jwt/jwt/v4 v4.5.2 // indirect
 	github.com/golang/protobuf v1.5.0 // indirect
-	github.com/hertz-contrib/cors v0.1.0 // indirect
-	github.com/hertz-contrib/websocket v0.2.0 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/klauspost/cpuid/v2 v2.0.9 // indirect

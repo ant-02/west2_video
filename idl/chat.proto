@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package chat;
+
+option go_package = "/chat";
+
+import "api.proto";
+
+message ChatRequest {}
+
+message ChatResponse {}
+
+service ChatService {
+    rpc Chat(ChatRequest) returns (ChatResponse) {
+        option (api.get) = "/chat";
+    }
+}

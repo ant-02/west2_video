@@ -2,54 +2,77 @@ package database
 
 import (
 	"context"
+	"sync"
 	"time"
 
 	"github.com/redis/go-redis/v9"
 )
 
-var (
+type redisInstance struct {
 	client *redis.Client
-	ctx    context.Context
+}
+
+var (
+	instance redisInstance
+	once     sync.Once
 )
 
-func InitRedis(addr, password string) error {
-	client = redis.NewClient(&redis.Options{
-		Addr:     addr,
-		Password: password,
-	})
+func InitRedis(ctx context.Context, addr, password string) error {
+	var err error
+	once.Do(func() {
+		instance.client = redis.NewClient(&redis.Options{
+			Addr:     addr,
+			Password: password,
+		})
 
-	ctx = context.Background()
-	_, err := client.Ping(ctx).Result()
+		_, err = instance.client.Ping(ctx).Result()
+	})
 	return err
 }
 
-func Set(key string, value interface{}, expire time.Time) error {
-	return client.Set(ctx, key, value, time.Since(expire)).Err()
+func GetRedisInstance() redisInstance {
+	return instance
 }
 
-func Get(key string) (string, error) {
-	return client.Get(ctx, key).Result()
+func (ri *redisInstance) Set(ctx context.Context, key string, value interface{}, expire time.Time) error {
+	return ri.client.Set(ctx, key, value, time.Since(expire)).Err()
 }
 
-func Exists(key string) (bool, error) {
-	exists, err := client.Exists(ctx, key).Result()
+func (ri *redisInstance) Get(ctx context.Context, key string) (string, error) {
+	return ri.client.Get(ctx, key).Result()
+}
+
+func (ri *redisInstance) Exists(ctx context.Context, key string) (bool, error) {
+	exists, err := ri.client.Exists(ctx, key).Result()
 	return exists == 1, err
 }
 
-func RPush(key string, value interface{}) error {
-	_, err := client.RPush(ctx, key, value).Result()
+func (ri *redisInstance) RPush(ctx context.Context, key string, value interface{}) error {
+	_, err := ri.client.RPush(ctx, key, value).Result()
 	return err
 }
 
-func LRange(key string, first int64, second int64) ([]string, error) {
-	return client.LRange(ctx, key, first, second).Result()
+func (ri *redisInstance) LRange(ctx context.Context, key string, first int64, second int64) ([]string, error) {
+	return ri.client.LRange(ctx, key, first, second).Result()
 }
 
-func Del(key []string) error {
-	_, err := client.Del(ctx, key...).Result()
+func (ri *redisInstance) Del(ctx context.Context, key []string) error {
+	_, err := ri.client.Del(ctx, key...).Result()
 	return err
 }
 
-func LLen(key string) (int64, error) {
-	return client.LLen(ctx, key).Result()
+func (ri *redisInstance) LLen(ctx context.Context, key string) (int64, error) {
+	return ri.client.LLen(ctx, key).Result()
+}
+
+func (ri *redisInstance) ZAdd(ctx context.Context, key string, value redis.Z) error {
+	return ri.client.ZAdd(ctx, key, value).Err()
+}
+
+func (ri *redisInstance) HSet(ctx context.Context, key string, value interface{}) error {
+	return ri.client.HSet(ctx, key, value).Err()
+}
+
+func (ri *redisInstance) Eval(ctx context.Context, script string, keys []string, args []interface{}) error {
+	return ri.client.Eval(ctx, script, keys, args...).Err()
 }
