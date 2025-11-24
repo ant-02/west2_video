@@ -9,6 +9,7 @@ import (
 	"west2/pkg/service"
 
 	"github.com/cloudwego/hertz/pkg/app"
+	"github.com/cloudwego/hertz/pkg/protocol/consts"
 	"github.com/hertz-contrib/websocket"
 )
 
@@ -20,7 +21,7 @@ func Chat(ctx context.Context, c *app.RequestContext) {
 	err := upgrader.Upgrade(c, func(conn *websocket.Conn) {
 		uid := middleware.GetUserFromContext(ctx, c)
 		if uid == "" {
-			c.AbortWithStatus(400)
+			c.AbortWithStatus(consts.StatusBadRequest)
 			return
 		}
 		for {
@@ -31,19 +32,19 @@ func Chat(ctx context.Context, c *app.RequestContext) {
 			}
 			message, err = cs.Chat(uid, message)
 			if err != nil {
-				c.AbortWithStatus(400)
+				c.AbortWithStatus(consts.StatusBadRequest)
 				return
 			}
 			err = conn.WriteMessage(mt, message)
 			if err != nil {
-				c.AbortWithStatus(400)
+				c.AbortWithStatus(consts.StatusBadRequest)
 				return
 			}
 		}
 	})
 	if err != nil {
 		log.Print("upgrade:", err)
-		c.AbortWithStatus(400)
+		c.AbortWithStatus(consts.StatusBadRequest)
 		return
 	}
 }

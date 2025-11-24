@@ -73,6 +73,18 @@ func (ri *redisInstance) HSet(ctx context.Context, key string, value interface{}
 	return ri.client.HSet(ctx, key, value).Err()
 }
 
-func (ri *redisInstance) Eval(ctx context.Context, script string, keys []string, args []interface{}) error {
-	return ri.client.Eval(ctx, script, keys, args...).Err()
+func (ri *redisInstance) Eval(ctx context.Context, script string, keys []string, args []interface{}) (interface{}, error) {
+	return ri.client.Eval(ctx, script, keys, args...).Result()
+}
+
+func (ri *redisInstance) ZRange(ctx context.Context, key string, start, stop int64) ([]string, error) {
+	return ri.client.ZRange(ctx, key, start, stop).Result()
+}
+
+func (ri *redisInstance) ZRevRange(ctx context.Context, key string, start, stop int64) ([]string, error) {
+	return ri.client.ZRevRange(ctx, key, start, stop).Result()
+}
+
+func (ri *redisInstance) HGetAll(ctx context.Context, key string) (map[string]string, error) {
+	return ri.client.HGetAll(ctx, key).Result()
 }
